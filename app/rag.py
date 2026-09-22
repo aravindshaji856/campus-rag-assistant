@@ -6,6 +6,33 @@ from dotenv import load_dotenv
 from google import genai
 from sentence_transformers import SentenceTransformer
 
+from pathlib import Path
+import fitz
+
+CHUNK_WORDS = 300
+OVERLAP = 50
+
+
+def chunk_text(text, size=CHUNK_WORDS, overlap=OVERLAP):
+    words = text.split()
+    step = size - overlap
+    return [" ".join(words[s:s + size]) for s in range(0, len(words), step) if words[s:s + size]]
+
+
+def ingest_pdf(pdf_path):
+    doc = fitz.open(pdf_path)
+    ids, docs, metas = [], [], []
+    stem = Path(pdf_path).stem
+    for page_num, page in enumerate(doc, start=1):
+        for j, chunk in enumerate(chunk_text(page.get_text())):
+            ids.append(f"{stem}-p{page_num}-c{j}")
+            docs.append(chunk)
+            metas.append({"source": Path(pdf_path).name, "page": page_num})
+    if docs:
+        embeddings = embedder.encode(docs, normalize_embeddings=True).tolist()
+        collection.upsert(ids=ids, documents=docs, embeddings=embeddings, metadatas=metas)
+    return len(docs)
+
 load_dotenv()
 MODEL = "gemini-3.6-flash"
 NOT_FOUND = "I couldn't find this in the uploaded notes."
