@@ -30,7 +30,8 @@ def ask(q: Question):
         raise HTTPException(status_code=400, detail="Question cannot be empty")
     try:
         return answer(q.question)
-    except Exception:
+    except Exception as e:
+        print("ERROR:", repr(e))  # stays in server logs only
         raise HTTPException(status_code=503, detail="Language model unavailable, try again shortly")
 
 @app.post("/upload")
