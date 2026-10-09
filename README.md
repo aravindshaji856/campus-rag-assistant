@@ -1,8 +1,2 @@
----
-title: Campus RAG Assistant
-emoji: 📚
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 7860
----
+# campus-rag-assistant
+RAG-based study assistant that answers questions from course notes with source citations.
