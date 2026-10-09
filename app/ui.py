@@ -1,7 +1,7 @@
 import requests
 import streamlit as st
 
-API = "http://127.0.0.1:8000"
+API = "http://127.0.0.1:7860"
 
 st.set_page_config(page_title="Campus RAG Assistant")
 st.title("📚 Campus RAG Assistant")

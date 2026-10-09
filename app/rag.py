@@ -3,7 +3,8 @@ import re
 import time
 import chromadb
 from dotenv import load_dotenv
-from google import genai
+from google import genai #gemini
+from groq import Groq
 from sentence_transformers import SentenceTransformer
 
 from pathlib import Path
@@ -34,10 +35,10 @@ def ingest_pdf(pdf_path):
     return len(docs)
 
 load_dotenv()
-MODEL = "gemini-3.6-flash"
+MODEL = "llama-3.3-70b-versatile"         #MODEL = "gemini-3.6-flash" ---use this for gemini api
 NOT_FOUND = "I couldn't find this in the uploaded notes."
 
-llm = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+llm = Groq(api_key=os.getenv("GROQ_API_KEY"))   #llm = genai.Client(api_key=os.getenv("GEMINI_API_KEY")) --gemini
 embedder = SentenceTransformer("BAAI/bge-small-en-v1.5")
 collection = chromadb.PersistentClient(path="chroma_db").get_or_create_collection("notes")
 
@@ -63,15 +64,30 @@ Context:
 
 Question: {question}"""
 
-
-def generate(prompt, retries=3):
+"""def generate(prompt, retries=3):
     for attempt in range(retries):
         try:
             return llm.models.generate_content(model=MODEL, contents=prompt).text
         except Exception:
             if attempt == retries - 1:
                 raise
-            time.sleep(2 ** attempt)
+            time.sleep(2 ** attempt)"""
+
+def generate(prompt, retries=3):
+    for attempt in range(retries):
+        try:
+            response = llm.chat.completions.create(
+                model=MODEL,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            if "rate_limit" in str(e).lower() and attempt < retries - 1:
+                time.sleep(15)
+                continue
+            if attempt == retries - 1:
+                raise
+
 
 
 def answer(question):
